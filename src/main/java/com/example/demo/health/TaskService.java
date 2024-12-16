@@ -41,16 +41,16 @@ public class TaskService {
     @Transactional
     public void updateTask(Long taskId, String title, String description, String status) {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task with ID: " + taskId + " does not exist."));
-        if(title != null && title.length() > 0 && !Objects.equals(task.getTitle(), title)) {
+        if(title != null && !title.isEmpty() && !Objects.equals(task.getTitle(), title)) {
             Optional<Task> taskOptional = taskRepository.findTaskByTitle(title);
             if(taskOptional.isEmpty()) {
                 task.setTitle(title);
             }
         }
-        if(description != null && description.length() > 0 && !Objects.equals(task.getDescription(), description)) {
+        if(description != null && !description.isEmpty() && !Objects.equals(task.getDescription(), description)) {
             task.setDescription(description);
         }
-        if(status != null && status.length() > 0 && !Objects.equals(task.getStatus(), status)) {
+        if(status != null && !status.isEmpty() && !Objects.equals(task.getStatus(), status)) {
             task.setStatus(status);
         }
     }
