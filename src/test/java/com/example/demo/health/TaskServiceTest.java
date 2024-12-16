@@ -43,49 +43,55 @@ class TaskServiceTest {
 
     @Test
     void canAddNewTask() {
-        //given
+        //Given a new task
         Task task = new Task("Title", "Description", "Pending");
-        //when the service under test is give the above value
+        //And that task gets created
         taskService.newTask(task);
-        //then verify that repository captures the same value invoked under test
+        //Then verify that the repository's 'save' method is called with a Task object
+        //Note: To capture and examine the exact Task object passed to the repository, an ArgumentCaptor is used
         ArgumentCaptor<Task> taskArgumentCaptor = ArgumentCaptor.forClass(Task.class);
+        //Verify that the 'save' method of the taskRepository was invoked
         verify(taskRepository).save(taskArgumentCaptor.capture());
-
+        //Retrieves task object
         Task capturedTask = taskArgumentCaptor.getValue();
-
+        //Checks that the captured Task object is exactly the same as the Task object provided to the service
         assertThat(capturedTask).isEqualTo(task);
     }
 
     @Test
     void willThrowExceptionWhenTitleIsTaken() {
-        //given a new task
+        //Given a new task
         Task task = new Task("Title", "Description", "Pending");
+        //Simulates scenario where title is already taken
         Optional<Task> existingTask = Optional.of(task);
         given(taskRepository.findTaskByTitle(task.getTitle())).willReturn(existingTask);
-        //when the service under test is given the above value then verify that an exception is thrown
+        //When the service under test is given the above value then verify that an exception is thrown
         assertThatThrownBy(()->taskService.newTask(task))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Task with the same title already exists!");
+        //Ensures 'save' method is never called
         verify(taskRepository, never()).save(any());
     }
 
     @Test
     void canDeleteTaskWithExistingID() {
-        //given
+        //Given a new task
         Task task = new Task("Title", "Description", "Pending");
+        //And simulating the existence of a task with the provided ID
         given(taskRepository.existsById(task.getId())).willReturn(true);
-        // when
+        //When trying to delete task
         taskService.deleteTask(task.getId());
-        // then
+        //Then task gets deleted
         then(taskRepository).should().deleteById(task.getId());
     }
 
     @Test
     void willThrowExceptionWhenDeletingTaskThatDoesNotExist() {
-        // given
+        //Given a new task
         Task task = new Task("Title", "Description", "Pending");
+        //And task does not exist
         given(taskRepository.existsById(task.getId())).willReturn(false);
-        // when / then
+        //When the task is tried to be deleted then throw an error message
         assertThatThrownBy(()->taskService.deleteTask(task.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Task with ID: " + task.getId() + " does not exist!");
@@ -93,14 +99,16 @@ class TaskServiceTest {
 
     @Test
     void canUpdateTaskIfAllIsValid() {
-        // given an old task and new updated attributes
+        //Given an old task and new updated attributes
         Task existingTask = new Task("Old Title", "Old Description", "Pending");
         Task updatedTask = new Task("New Title", "New Description", "Completed");
+        //And repository returns that there's a valid existing task
         given(taskRepository.findById(updatedTask.getId())).willReturn(Optional.of(existingTask));
+        //And the new title is not repeated
         given(taskRepository.findTaskByTitle("New Title")).willReturn(Optional.empty());
-        // when
+        //When updating the existing task
         taskService.updateTask(updatedTask.getId(), updatedTask.getTitle(), updatedTask.getDescription(), updatedTask.getStatus());
-        // then
+        //Then assert that the task was correctly updated and no more interactions are done after the update
         assertThat(existingTask.getTitle()).isEqualTo("New Title");
         assertThat(existingTask.getDescription()).isEqualTo("New Description");
         assertThat(existingTask.getStatus()).isEqualTo("Completed");
