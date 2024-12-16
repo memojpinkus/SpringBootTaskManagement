@@ -43,7 +43,7 @@ public class TaskService {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task with ID: " + taskId + " does not exist."));
         if(title != null && title.length() > 0 && !Objects.equals(task.getTitle(), title)) {
             Optional<Task> taskOptional = taskRepository.findTaskByTitle(title);
-            if(taskOptional.isPresent()) {
+            if(taskOptional.isEmpty()) {
                 task.setTitle(title);
             }
         }
